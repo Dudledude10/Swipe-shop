@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>swipe-shop</title>
+<style>
+:root{--o:#C42B0E;--ot:var(--o);--bg:#FFFBF7;--fg:#141010;--mu:#6b524b;--card:#F4EEE9;--ln:#E6DDD6;--ctl:#8a7a73;--fs:16px;--nav:60px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme=black]{--bg:#000;--fg:#F7F2EE;--mu:#a89690;--card:#151111;--ln:#2a2322;--ctl:#7d726d;--ot:color-mix(in srgb,var(--o) 45%,#fff);color-scheme:dark}
+:root[data-theme=navy]{--bg:#0B1730;--fg:#F2F6FF;--mu:#93a4c4;--card:#13234A;--ln:#243a70;--ctl:#6b7fae;--ot:color-mix(in srgb,var(--o) 45%,#fff);color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-theme=black]):not([data-theme=navy]){--bg:#170D0B;--fg:#FFF6EE;--mu:#b89a90;--card:#2A1713;--ln:#432823;--ctl:#85706a;--ot:color-mix(in srgb,var(--o) 45%,#fff);color-scheme:dark}}
+*{box-sizing:border-box;margin:0}html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:var(--fs)/1.45 "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--ot);outline-offset:2px}
+#app{position:relative;height:100%;overflow:hidden}
+#view,#ghost{position:absolute;inset:0 0 var(--nav) 0;overflow-y:auto;background:var(--bg)}#view{z-index:2}#ghost{z-index:1}
+nav{position:absolute;left:0;right:0;bottom:0;height:var(--nav);display:flex;background:var(--bg);border-top:1px solid var(--ln);z-index:20}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.68rem;font-weight:500;color:var(--mu);position:relative;transition:color .15s}
+nav button.on{color:var(--fg)}nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}nav button.on svg{stroke:var(--ot)}
+.bd{position:absolute;top:6px;left:calc(50% + 6px);background:var(--o);color:#fff;border-radius:8px;font-size:.62rem;min-width:16px;height:16px;line-height:16px;padding:0 4px;text-align:center;font-weight:600}
+.pop{animation:pop .4s}@keyframes pop{40%{transform:scale(1.2)}}
+.inR{animation:inR .35s cubic-bezier(.2,.8,.2,1)}.inL{animation:inL .35s cubic-bezier(.2,.8,.2,1)}@keyframes inR{from{transform:translateX(100%)}}@keyframes inL{from{transform:translateX(-100%)}}
+.outL{animation:outL .35s cubic-bezier(.2,.8,.2,1) forwards}.outR{animation:outR .35s cubic-bezier(.2,.8,.2,1) forwards}@keyframes outL{to{transform:translateX(-24%);opacity:.5}}@keyframes outR{to{transform:translateX(24%);opacity:.5}}
+/* feed */
+#feed{position:relative;height:100%;display:flex;justify-content:center;background:#0c0908;touch-action:none;user-select:none;overflow:hidden}
+.stage{position:relative;height:100%;width:100%;overflow:hidden;flex:none}
+.sl{position:absolute;inset:0;transition:transform .45s cubic-bezier(.2,.8,.2,1);color:#fff}
+.sl:after{content:"";position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(transparent,rgba(0,0,0,.6));pointer-events:none}
+.vid{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}.vid video{width:100%;height:100%;object-fit:cover}
+.vid.ld:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);background-size:200% 100%;animation:sh 1.3s infinite}
+.ph{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.logo{position:absolute;top:16px;left:16px;z-index:6;color:#fff;font-weight:700;font-size:1.05rem;letter-spacing:-.01em;pointer-events:none}
+.meta{position:absolute;left:16px;right:80px;bottom:20px;z-index:2}
+.cr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.av{width:36px;height:36px;border-radius:50%;background:#fff;color:#141010;font-weight:650;display:flex;align-items:center;justify-content:center;flex:none}
+.un{font-weight:600;font-size:.95rem;color:#fff}
+.fl{border:1px solid #fff;border-radius:4px;padding:5px 12px;font-size:.78rem;font-weight:600;color:#fff;transition:background .15s,color .15s}.fl.on{background:#fff;color:#141010}
+.pn{display:flex;gap:12px;align-items:baseline;text-align:left;color:#fff}.pn b{font-weight:600;font-size:1.05rem}.pn span{opacity:.92}
+.rail{position:absolute;right:6px;bottom:20px;display:flex;flex-direction:column;align-items:center;gap:4px;z-index:5}
+.rail button{width:56px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;font-size:.72rem;font-weight:600;transition:transform .15s}
+.rail button svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.rail button.on svg{fill:#fff}.rail button:active{transform:scale(.92)}.rail button.pp svg{animation:pp .25s ease}@keyframes pp{50%{transform:scale(1.18)}}.n:empty{display:none}
+.side{display:none;flex-direction:column;gap:14px;width:340px;margin-left:32px;padding:40px 0;overflow-y:auto;background:var(--bg);color:var(--fg);touch-action:auto;user-select:text}
+.cr2{display:flex;align-items:center;gap:12px}.av2{width:44px;height:44px;border-radius:50%;background:var(--card);font-weight:650;display:flex;align-items:center;justify-content:center;flex:none}
+.cr2>div{flex:1}.un2{font-weight:600}.fl2{border:1px solid var(--ctl);border-radius:4px;padding:6px 14px;font-size:.85rem;font-weight:600}.fl2.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.side h2{font-size:1.4rem;line-height:1.2;font-weight:650;letter-spacing:-.02em}.sp{font-size:1.15rem;font-weight:600}.ds2{color:var(--mu)}
+@media(min-width:600px){.stage{width:auto;aspect-ratio:9/16}}
+@media(min-width:900px){:root{--nav:0px}
+ nav{top:0;bottom:0;height:auto;right:auto;width:96px;flex-direction:column;justify-content:flex-start;gap:6px;padding-top:24px;border-top:0;border-right:1px solid var(--ln)}nav button{flex:none;height:64px}
+ #view,#ghost{inset:0 0 0 96px}#feed{background:var(--bg)}.stage{border-radius:4px;max-height:100%}.side{display:flex}
+ .pg{max-width:780px;margin:0 auto}.grid{grid-template-columns:repeat(4,1fr)!important}
+ #ov{left:auto;width:min(520px,100%);border-left:1px solid var(--ln)}}
+/* pages */
+.pg{padding:20px 16px 28px}.pg h1{font-size:1.5rem;font-weight:650;letter-spacing:-.02em;line-height:1.2;margin-bottom:14px}
+h3{margin:22px 0 8px;font-size:.75rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--mu)}
+.pr{font-size:1.35rem;font-weight:650;letter-spacing:-.01em;margin:4px 0 10px}.mu{color:var(--mu);font-size:.88em}.st{color:var(--ot)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px 12px}.hs{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}.hs .pc{min-width:150px;width:150px}
+.pc{display:block;width:100%;text-align:left}.pc .im{aspect-ratio:4/5;display:flex;align-items:flex-end;padding:10px;color:#fff;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;border-radius:2px;transition:filter .2s}
+.pc .t{padding:10px 0 0;font-size:.88rem}.pc b{display:block;font-weight:600}.pc small{color:var(--mu)}
+@media(hover:hover){.pc:hover .im{filter:brightness(1.1)}.btn:hover{opacity:.92}.c:hover,.ls button:hover{background:var(--card)}}
+input[type=text],input[type=email],input[type=search],select{width:100%;height:46px;padding:0 14px;border-radius:4px;border:1px solid var(--ctl);background:transparent}
+.ch{display:flex;gap:8px;overflow-x:auto;margin:10px 0;padding-bottom:2px}.c{height:34px;padding:0 14px;border-radius:4px;border:1px solid var(--ln);white-space:nowrap;font-size:.85rem;font-weight:500;flex:none;transition:background .15s}.c.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn{display:block;width:100%;height:48px;border-radius:4px;background:var(--o);color:#fff;font-weight:600;letter-spacing:.01em;transition:opacity .15s,transform .1s}.btn:active{transform:scale(.99);opacity:.85}.btn.g{background:transparent;color:var(--fg);border:1px solid var(--ctl)}
+.row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--ln)}.row .im{width:64px;height:80px;flex:none;border-radius:2px;display:flex;align-items:center;justify-content:center;color:#fff}.row button.im{border:0}.row .f{flex:1;min-width:0}
+.q{display:flex;align-items:center;gap:12px;margin-top:8px}.q button{width:32px;height:32px;border:1px solid var(--ctl);border-radius:4px;font-weight:600}.q button:last-child{border:0}
+.sum div{display:flex;justify-content:space-between;padding:5px 0}.sum .tt{font-weight:650;font-size:1.05rem;border-top:1px solid var(--ln);margin-top:8px;padding-top:12px}
+.ls{border-top:1px solid var(--ln)}.ls button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:14px 4px;border-bottom:1px solid var(--ln);text-align:left}.ls>.row{padding:12px 4px!important}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));margin:16px 0;border-top:1px solid var(--ln);border-bottom:1px solid var(--ln)}.stat div{padding:12px 4px;text-align:center;font-size:.78rem;color:var(--mu)}.stat b{display:block;font-size:1.15rem;font-weight:650;color:var(--fg)}
+.hd{position:relative;display:flex;align-items:center;min-height:44px;margin-bottom:14px}.hd h1{margin:0}
+.gear{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:4px;color:var(--fg)}.hd .gear{position:absolute;top:0;right:-8px}.gear svg{transition:transform .5s cubic-bezier(.2,.8,.2,1)}.gear:active svg{transform:rotate(90deg)}
+.pf{display:flex;gap:20px;align-items:center}.big{width:72px;height:72px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:650;flex:none}.pname{font-size:1.1rem;font-weight:650;margin-top:14px}.bio{margin-top:2px}
+.drop{display:flex;align-items:center;justify-content:center;aspect-ratio:9/16;max-height:46vh;width:100%;border:1px dashed var(--ctl);border-radius:4px;color:var(--mu);margin:12px 0;cursor:pointer;text-align:center;padding:16px}.drop:focus-within{outline:2px solid var(--ot)}.vh{position:absolute;opacity:0;width:1px;height:1px}
+.vp{width:100%;max-height:46vh;background:#000;margin:0 0 12px;border-radius:4px}
+.cm{padding:12px 0;border-bottom:1px solid var(--ln);font-size:.92rem}.cm b{margin-right:6px}.cin{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 0;background:var(--bg)}
+.ck{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;font-size:.85rem}.ck input{width:20px;height:20px;accent-color:var(--o)}.lnk{color:var(--ot);text-decoration:underline;padding:4px 2px}.legal p{margin:6px 0}
+/* overlay + feedback */
+#ov{visibility:hidden;position:absolute;inset:0;background:var(--bg);z-index:40;overflow-y:auto;transform:translateX(100%);transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s linear .35s}
+#ov.on{visibility:visible;transform:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.bk{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;background:var(--bg);border-bottom:1px solid var(--ln);font-weight:600}.bk button{width:44px;height:44px;font-size:1.25rem}
+.gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}.gal div{min-width:100%;aspect-ratio:4/5;max-height:62vh;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#fff}
+.opt{display:flex;gap:8px;flex-wrap:wrap}.opt button{min-width:44px;height:40px;padding:0 14px;border:1px solid var(--ctl);border-radius:4px}.opt button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+#toast{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translate(-50%,-90px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:6px;z-index:60;transition:transform .25s ease;font-size:.9rem;max-width:92vw}#toast.on{transform:translate(-50%,0)}
+#ban{position:absolute;top:0;left:0;right:0;z-index:70;display:flex;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 0;pointer-events:none;transform:translateY(-160%);transition:transform .3s ease}#ban.on{transform:none}
+.bi{display:flex;align-items:center;gap:12px;background:var(--fg);color:var(--bg);border-radius:6px;padding:12px 16px;width:100%;max-width:400px}
+.bc{width:28px;height:28px;border-radius:50%;background:var(--o);display:flex;align-items:center;justify-content:center;flex:none}.bc svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24}#ban.on .bc svg{animation:ck .35s .1s forwards}@keyframes ck{to{stroke-dashoffset:0}}
+.bt{display:flex;flex-direction:column;line-height:1.25;font-size:.9rem}.bt small{opacity:.8}.bp{display:none}
+/* settings */
+.grp{border-top:1px solid var(--ln)}.tr{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--ln)}.tr small{display:block}
+.tgl{width:46px;height:28px;border-radius:14px;background:var(--mu);position:relative;flex:none;transition:background .2s}.tgl:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.tgl.on{background:var(--o)}.tgl.on:after{left:21px}
+.bgs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.bgo{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.78rem;padding:8px 4px;border-radius:4px;border:1px solid var(--ln)}.bgo i{width:100%;height:44px;border-radius:2px;border:1px solid var(--ln)}.bgo.on{border-color:var(--ot);font-weight:600}
+.sw{display:flex;gap:10px}.sw button{width:36px;height:36px;border-radius:4px;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--ln)}.sw button.on{box-shadow:0 0 0 2px var(--fg)}
+.sk{background:linear-gradient(90deg,var(--card),var(--ln),var(--card));background-size:200% 100%;animation:sh 1.2s infinite;border-radius:4px;height:150px}@keyframes sh{to{background-position:-200% 0}}
+.rm *,.rm *:before,.rm *:after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style></head><body>
+<div id="app"><div id="toast" role="status" aria-live="polite"></div><div id="ban" role="status" aria-live="polite"></div><div id="view"></div><nav id="nav" aria-label="Main"></nav><div id="ov" role="dialog" aria-modal="true" aria-label="Details"></div></div>
+<script>
+const P=[
+["Aero Runner","Stride",129,"Shoes","Featherlight knit running shoe with a responsive foam midsole.",["Sunset","Slate","Cloud"],["7","8","9","10","11"],"#c2410c"],
+["Wool Overcoat","Northline",249,"Clothing","Italian wool blend, tailored fit, fully lined for cold commutes.",["Camel","Charcoal"],["S","M","L","XL"],"#6b4f33"],
+["Studio Headphones","Halo",199,"Tech","Over-ear wireless, 40-hour battery, adaptive noise cancelling.",["Black","Silver"],["One size"],"#2f3542"],
+["Linen Shirt","Maren",59,"Clothing","Breathable washed linen with a relaxed collar.",["White","Sage","Navy"],["S","M","L"],"#3f6b50"],
+["Smart Watch S2","Pulse",279,"Tech","Always-on display, sleep tracking, 7-day battery.",["Graphite","Rose"],["40mm","44mm"],"#334155"],
+["Leather Tote","Atelier 9",189,"Bags","Full-grain leather with a suede-lined interior.",["Tan","Black"],["One size"],"#8a4a0f"],
+["Sunglasses Classic","Vero",89,"Accessories","Polarised UV400 lenses in a lightweight acetate frame.",["Tortoise","Black"],["One size"],"#0b6e99"],
+["Ceramic Pour-Over","Kiln & Co",45,"Home","Hand-glazed dripper that brews a clean, bright cup.",["Cream","Ink"],["1 to 2 cup","3 to 4 cup"],"#a85d0a"],
+["Trail Backpack 28L","Stride",109,"Bags","Water-resistant, ventilated back panel, hidden laptop sleeve.",["Forest","Orange"],["One size"],"#1f6b3a"],
+["Denim Jacket","Maren",119,"Clothing","Rigid selvedge denim that softens with every wear.",["Indigo","Black"],["S","M","L","XL"],"#1d4ed8"]
+].map((a,i)=>({id:i,n:a[0],b:a[1],p:a[2],o:a[2],c:a[3],d:a[4],col:a[5],sz:a[6],g:[a[7],a[7]],stock:i%4==3?3:20}));
+const CATS=[...new Set(P.map(p=>p.c))],BR=[...new Set(P.map(p=>p.b))],RATE={USD:[1,"$"],EUR:[.92,"€"],GBP:[.79,"£"]};
+/* LEGAL */
+const BIZ={"name": "[Business name]", "address": "[Registered address]", "email": "[Contact email]", "reg": "[Company registration number]", "tax": "[VAT or tax number]", "country": "[Country of registration]", "updated": "[Date last updated]"};
+const LEGAL={"privacy": {"t": "Privacy policy", "s": [["Who we are", ["{name} (“we”) runs swipe-shop at swipeshop.com. You can contact us at {email} or at {address}."]], ["What the app stores", ["swipe-shop currently keeps the following in your browser’s local storage, on your own device: the items in your cart, products you like or save, products you have viewed, your search history, your settings (background, text size, currency, notifications), and, if you enter them, your name, email address and delivery address.", "We do not receive this information. It stays on your device unless you place an order, as described below."]], ["Orders and payments", ["[Complete before launch: list the data collected at checkout, the payment provider that processes payments (for example Stripe), and the carrier that delivers orders.]", "Card details are entered with the payment provider and are never stored by us."]], ["How we use information", ["To show your cart and saved items, to change the order of products you see based on what you view, like and save (you can turn this off in Settings under Privacy and personalisation), and to process and deliver orders."]], ["Sharing", ["We do not sell your data. We do not use advertising or analytics trackers. We share information only with the service providers needed to take payment and deliver orders: [list providers]."]], ["How long we keep it", ["Data on your device stays there until you erase it. [State how long order records are kept and why.]"]], ["Your rights", ["Depending on where you live, you may have the right to access, correct, delete or export your data, to object to or restrict how it is used, and to complain to your data protection authority. To use these rights, email {email}."]], ["Deleting your data", ["On your device: open Settings, then Your data, then Erase all my data.", "Data we hold about you: email {email} and we will respond within [the time limit required by law in your region]."]], ["Children", ["swipe-shop is for people aged 18 or over. We do not knowingly collect data from children. If you believe a child has given us data, contact us and we will delete it."]], ["Cookies", ["See our cookie policy."]], ["Changes", ["We will post any changes on this page and update the date above."]]]}, "terms": {"t": "Terms and conditions", "s": [["Using swipe-shop", ["These terms apply when you use swipe-shop at swipeshop.com. By using it you agree to them."]], ["Who can use it", ["You must be 18 or over to create an account or place an order."]], ["Your account", ["Keep your details accurate and your login private. Tell us if you think someone else has used your account."]], ["Products and information", ["We take care to describe products accurately. Colours, sizes and photographs may differ slightly from the item you receive."]], ["Prices and payment", ["Prices are shown before you order. [State whether prices include tax.] Payment is taken by [payment provider]. Shipping costs are shown in your cart before you pay."]], ["Orders", ["An order becomes a contract only when we confirm it. We may decline or cancel an order, for example because of a pricing error or a stock problem, and we will refund any payment taken."]], ["Delivery", ["[State delivery areas, costs and estimated times.]"]], ["Returns and refunds", ["See our refund policy."]], ["Acceptable use", ["Do not misuse the site, attempt to break or overload it, or use it for anything unlawful."]], ["Our content", ["The content, branding and software on swipe-shop belong to us or our licensors. You may not copy them without permission."]], ["Liability", ["Nothing in these terms limits your statutory rights as a consumer or any liability that cannot be limited by law, including for death or personal injury caused by negligence, or for fraud.", "Otherwise, our liability to you in connection with an order is limited to the price of the products ordered."]], ["Governing law", ["These terms are governed by the law of [country or state]. [State which courts have jurisdiction.]"]], ["Changes", ["We may update these terms. The version on this page when you place an order applies to that order."]], ["Contact", ["{name}, {address}, {email}."]]]}, "refunds": {"t": "Refund policy", "s": [["Returning an item", ["You may return unused items in their original condition within [return period, for example 30 days] of delivery. [Where you live you may also have a legal right to cancel within a set number of days. State it here.]"]], ["How to return", ["Email {email} with your order number. We will tell you where to send the item. [State who pays return shipping.]"]], ["When you will be refunded", ["We refund to the original payment method within [number] days of receiving the returned item."]], ["Faulty or incorrect items", ["If an item is faulty, damaged or not as described, you are entitled to a repair, replacement or refund under consumer law. Contact us and we will put it right."]], ["Items that cannot be returned", ["[List any exceptions, or write “None”.]"]]]}, "cookies": {"t": "Cookie policy", "s": [["Cookies", ["swipe-shop does not set cookies."]], ["Local storage", ["The app uses your browser’s local storage to keep your cart, saved items, search history and settings on your device. It is strictly necessary for the app to work, and it is not used for tracking or advertising."]], ["Analytics and advertising", ["We do not use analytics, advertising or social media trackers, so there is no cookie banner. If we add anything that is not strictly necessary, we will ask for your consent first and update this page."]], ["Clearing stored data", ["Open Settings, then Your data, then Erase all my data. You can also clear site data in your browser settings."]]]}};
+const fill=t=>t.replace(/\{(\w+)\}/g,(x,k)=>BIZ[k]||x);
+const LEGAL_LINKS=[["privacy","Privacy policy"],["terms","Terms and conditions"],["refunds","Refund policy"],["cookies","Cookie policy"],["biz","Business details"]];
+const legalRows=()=>`<div class="ls">${LEGAL_LINKS.map(x=>`<button data-a="legal" data-v="${x[0]}"><span>${x[1]}</span><span class="mu">›</span></button>`).join("")}</div>`;
+const legalList=()=>`<h3>Legal</h3>${legalRows()}`;
+function showLegal(k){
+ if(k=="biz")return ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Business details</div><div class="pg"><div class="ls">${[["Business name",BIZ.name],["Registered address",BIZ.address],["Contact email",BIZ.email],["Registration number",BIZ.reg],["VAT or tax number",BIZ.tax],["Country",BIZ.country]].map(x=>`<div class="row" style="padding:10px 16px"><span class="mu f">${x[0]}</span><span>${x[1]}</span></div>`).join("")}</div></div>`);
+ const L=LEGAL[k];
+ ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>${L.t}</div><div class="pg legal"><p class="mu">Last updated: ${BIZ.updated}</p>${L.s.map(x=>`<h3>${x[0]}</h3>${x[1].map(p=>`<p>${fill(p)}</p>`).join("")}`).join("")}</div>`)}
+const D={follow:[],comments:{},uploads:[],cart:[],liked:[],saved:[],viewed:[],cats:{},brands:{},searches:[],theme:"auto",accent:"#C42B0E",fs:16,user:null,orders:[],cur:"USD",addr:"",code:"",notif:true};
+let S=Object.assign({},D);try{S=Object.assign(S,JSON.parse(localStorage.getItem("swipe-v1")||"{}"))}catch(e){}
+const AM={"#FF6B00":"#C42B0E","#FF3D1F":"#C42B0E","#FF7A00":"#A64A08","#FF2D6F":"#BE185D","#2563eb":"#1D4ED8"};if(AM[S.accent])S.accent=AM[S.accent];
+if(S.theme=="dark")S.theme="black";
+const save=()=>{try{localStorage.setItem("swipe-v1",JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s),m=n=>RATE[S.cur][1]+(n*RATE[S.cur][0]).toFixed(2),disc=p=>p.o>p.p?Math.round(100-p.p/p.o*100):0;
+let tab="home",idx=0,sel={},ex={q:"",cat:"",sort:"feat",max:400},toastT;
+function theme(){const r=document.documentElement;r.dataset.theme=S.theme=="auto"?"":S.theme;r.style.setProperty("--o",S.accent);r.style.setProperty("--fs",S.fs+"px");r.classList.toggle("rm",!!S.reduce)}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove("on"),1800)}
+function score(p){return((S.favc||[]).includes(p.c)?4:0)+(S.cats[p.c]||0)*2+(S.brands[p.b]||0)*3+(S.liked.includes(p.id)?2:0)}
+const rec=()=>S.pers===false?[...P]:[...P].sort((a,b)=>score(b)-score(a));
+function track(p,w){if(S.pers===false)return;S.cats[p.c]=(S.cats[p.c]||0)+w;S.brands[p.b]=(S.brands[p.b]||0)+w;save()}
+function view(p){if(S.viewed[0]!==p.id){S.viewed=[p.id,...S.viewed.filter(x=>x!=p.id)].slice(0,12);track(p,1)}}
+const cnt=()=>S.cart.reduce((a,l)=>a+l.q,0);
+function add(id,size,col,fromSwipe){const p=P[id];size=size||sel[id]?.s||p.sz[0];col=col||sel[id]?.c||p.col[0];
+ const l=S.cart.find(x=>x.id==id&&x.s==size&&x.c==col);
+ if(l&&fromSwipe){toast("Already in cart. Open the product to add more.");return false}
+ if(l){if(l.q>=p.stock){toast("Maximum quantity for this item reached");return false}l.q++}else S.cart.push({id,s:size,c:col,q:1});
+ track(p,3);save();nav();$("#nav [data-t=cart]")?.classList.add("pop");setTimeout(()=>$("#nav [data-t=cart]")?.classList.remove("pop"),500);banner(p);return true}
+const ic={upload:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/>',profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',home:'<path d="M3 11l9-8 9 8v10H3z"/>',explore:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/>',cart:'<path d="M3 4h3l2 12h11l2-8H7"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/>',account:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'};
+function nav(){$("#nav").innerHTML=["home","explore","upload","cart","profile"].map(t=>`<button data-t="${t}" class="${tab==t?"on":""}" aria-label="${t}"${tab==t?' aria-current="page"':""}><svg viewBox="0 0 24 24">${ic[t]}</svg>${t[0].toUpperCase()+t.slice(1)}${t=="cart"&&cnt()?`<span class="bd">${cnt()}</span>`:""}</button>`).join("")}
+function card(p){return`<button class="pc" data-a="open" data-id="${p.id}"><div class="im" style="background:${p.g[0]}">${p.c}</div><div class="t"><b>${p.n}</b><small>${p.b}</small><div>${m(p.p)} ${disc(p)?`<small><s>${m(p.o)}</s></small>`:""}</div></div></button>`}
+/* HOME FEED */
+let feedList=[],VID={};
+const ICO={heart:'<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/>',chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/>',share:'<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M12 3v12M7.5 7.5L12 3l4.5 4.5"/>',mark:'<path d="M6 3h12v18l-6-4-6 4z"/>',cart:'<path d="M3 4h3l2 12h11l2-8H7"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/>'};
+const slug=b=>b.toLowerCase().replace(/[^a-z0-9]/g,""),handle=b=>"@"+slug(b),esc=t=>String(t).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const vidFor=id=>{const u=S.uploads.filter(x=>x.pid==id).pop();return u?VID[u.k]:null};
+const rb=(a,l,i)=>`<button data-a="${a}" aria-label="${l}"><svg viewBox="0 0 24 24">${ICO[i]}</svg><span class="n"></span></button>`;
+function home(){feedList=rec();idx=Math.min(idx,feedList.length-1);
+ $("#view").innerHTML=`<div id="feed"><div class="stage"><div class="logo">swipe-shop</div>${feedList.map((p,i)=>slide(p,i)).join("")}<div class="rail">${rb("like","Like","heart")}${rb("cmt","Comments","chat")}${rb("share","Share","share")}${rb("save","Save","mark")}${rb("swadd","Add to cart","cart")}</div></div><aside class="side" id="side" aria-label="Product"></aside></div>`;
+ document.querySelectorAll(".vid.ld video").forEach(v=>{const d=()=>v.parentNode.classList.remove("ld");v.addEventListener("loadeddata",d,{once:true});v.addEventListener("error",d,{once:true})});pos();bindFeed()}
+const slide=(p,i)=>{const v=vidFor(p.id);return`<section class="sl" data-i="${i}" style="background:${p.g[0]}"><div class="vid${v?" ld":""}">${v?`<video src="${v}" muted loop playsinline preload="metadata"></video>`:'<span class="ph">Video placeholder</span>'}</div><div class="meta"><div class="cr"><button class="av" data-a="creator" data-v="${p.b}" aria-label="View ${p.b} profile">${p.b[0]}</button><button class="un" data-a="creator" data-v="${p.b}">${handle(p.b)}</button><button class="fl${S.follow.includes(p.b)?" on":""}" data-a="follow" data-v="${p.b}">${S.follow.includes(p.b)?"Following":"Follow"}</button></div><button class="pn" data-a="det2" data-id="${p.id}"><b>${p.n}</b><span>${m(p.p)}</span></button></div></section>`};
+function sidePanel(p){const el=$("#side");if(!el)return;const f=S.follow.includes(p.b);el.innerHTML=`<div class="cr2"><button class="av2" data-a="creator" data-v="${p.b}" aria-label="View ${p.b} profile">${p.b[0]}</button><div><button class="un2" data-a="creator" data-v="${p.b}">${handle(p.b)}</button><div class="mu">${p.c}</div></div><button class="fl2${f?" on":""}" data-a="follow" data-v="${p.b}">${f?"Following":"Follow"}</button></div><h2>${p.n}</h2><div class="sp">${m(p.p)}</div><p class="ds2">${p.d}</p><button class="btn" data-a="swadd">Add to cart</button><button class="btn g" data-a="det2" data-id="${p.id}">View details</button>`}
+function pos(){document.querySelectorAll(".sl").forEach(s=>{const i=+s.dataset.i;s.style.transform=`translateY(${(i-idx)*100}%)`;s.inert=i!=idx;const v=s.querySelector("video");if(v){if(i==idx)v.play().catch(()=>{});else v.pause()}});
+ const p=feedList[idx];view(p);const r=document.querySelector(".rail");
+ if(r){const set=(a,on,n)=>{const b=r.querySelector(`[data-a=${a}]`);b.classList.toggle("on",on);if(n!==undefined)b.querySelector(".n").textContent=n};const lk=S.liked.includes(p.id);set("like",lk,lk?1:"");set("save",S.saved.includes(p.id));set("cmt",false,(S.comments[p.id]||[]).length||"")}
+ sidePanel(p)}
+function go(d){const n=idx+d;if(n<0||n>=feedList.length){if(n>=feedList.length)toast("That’s the last product. Swipe back up.");return}idx=n;pos()}
+function bindFeed(){const f=$("#feed");let sx,sy,t0,mt=0,on=0,x0,y0,wl=0;
+ const sls=()=>[...f.querySelectorAll(".sl")],H=()=>f.clientHeight;
+ const place=(dy,anim)=>sls().forEach(s=>{const i=+s.dataset.i;if(Math.abs(i-idx)>1)return;s.style.transition=anim?"":"none";s.style.transform=`translateY(calc(${(i-idx)*100}% + ${dy}px))`});
+ const mid=e=>{const t=[...e.touches];return[t.reduce((a,c)=>a+c.clientX,0)/t.length,t.reduce((a,c)=>a+c.clientY,0)/t.length]};
+ f.addEventListener("touchstart",e=>{if(e.target.closest("button,.side"))return;on=1;mt=Math.max(mt,e.touches.length);[sx,sy]=mid(e);if(e.touches.length==1)t0=Date.now()},{passive:false});
+ f.addEventListener("touchmove",e=>{if(!on)return;e.preventDefault();mt=Math.max(mt,e.touches.length);if(mt>1)return;let dy=mid(e)[1]-sy;if((idx==0&&dy>0)||(idx==feedList.length-1&&dy<0))dy*=.25;place(dy,false)},{passive:false});
+ f.addEventListener("touchend",e=>{if(!on||e.touches.length)return;on=0;const ch=e.changedTouches[0],dx=ch.clientX-sx,dy=ch.clientY-sy,n=mt,dt=Math.max(Date.now()-t0,1);mt=0;
+  sls().forEach(s=>s.style.transition="");
+  if(n>1){place(0,true);if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*.8){dx<0?det():swadd()}return}
+  if(Math.abs(dx)<10&&Math.abs(dy)<10&&dt<300){place(0,true);det();return}
+  const v=Math.abs(dy)/dt;if(Math.abs(dy)>H()*.15||(Math.abs(dy)>28&&v>.45)){const d=dy<0?1:-1;if(idx+d<0||idx+d>=feedList.length){place(0,true);go(d)}else go(d)}else place(0,true)},{passive:false});
+ f.addEventListener("touchcancel",()=>{on=0;mt=0;sls().forEach(s=>s.style.transition="");place(0,true)});
+ f.onpointerdown=e=>{if(e.pointerType!="mouse"||e.target.closest("button,.side"))return;x0=e.clientX;y0=e.clientY;t0=Date.now()};
+ f.onpointerup=e=>{if(e.pointerType!="mouse"||x0==null)return;const dx=e.clientX-x0,dy=e.clientY-y0;x0=null;if(Math.max(Math.abs(dx),Math.abs(dy))<45){if(Date.now()-t0<300)det();return}
+  if(Math.abs(dy)>Math.abs(dx))go(dy<0?1:-1);else if(dx<0)det();else swadd()};
+ f.onwheel=e=>{if(e.target.closest(".side"))return;e.preventDefault();if(Date.now()-wl<700)return;const ax=Math.abs(e.deltaX),ay=Math.abs(e.deltaY);if(ax>ay&&ax>30){wl=Date.now();e.deltaX>0?det():swadd()}else if(ay>=ax&&ay>8){wl=Date.now();go(e.deltaY>0?1:-1)}}}
+function banner(p){const b=$("#ban");b.innerHTML=`<div class="bi"><span class="bc"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span><span class="bt"><b>Added to cart</b><small>${p.n} · ${cnt()} in cart</small></span><i class="bp"></i></div>`;b.classList.remove("on");void b.offsetWidth;b.classList.add("on");clearTimeout(window.bnt);window.bnt=setTimeout(()=>b.classList.remove("on"),2200)}
+document.addEventListener("keydown",e=>{if(tab!="home"||$("#ov").classList.contains("on"))return;if(e.key=="ArrowDown")go(1);if(e.key=="ArrowUp")go(-1);if(e.key=="ArrowLeft")det();if(e.key=="ArrowRight")swadd()});
+function swadd(){const p=feedList[idx];add(p.id,0,0,true)}
+function det(){openP(feedList[idx].id)}
+/* DETAIL */
+function openP(id){const p=P[id];view(p);sel[id]=sel[id]||{s:p.sz[0],c:p.col[0]};const s=sel[id];
+ const rel=P.filter(x=>x.c==p.c&&x.id!=id).concat(P.filter(x=>x.c!=p.c&&x.b==p.b&&x.id!=id)).slice(0,4);
+ ov(`<div class="bk"><button data-a="close" aria-label="Back to feed">←</button>${p.n}</div>
+ <div class="gal">${[0,1,2].map(i=>`<div style="background:${p.g[0]};filter:brightness(${[.85,1,1.12][i]})">Photo placeholder</div>`).join("")}</div>
+ <div class="pg"><div class="mu">${p.b} · ${p.c}</div><h1>${p.n}</h1>
+ <div class="pr">${m(p.p)} ${disc(p)?`<small class="mu"><s>${m(p.o)}</s></small> <small class="st">−${disc(p)}%</small>`:""}</div>
+ <p style="margin:10px 0">${p.d}</p>
+ <h3>Colour: ${s.c}</h3><div class="opt">${p.col.map(c=>`<button data-a="sc" data-id="${id}" data-v="${c}" class="${c==s.c?"on":""}">${c}</button>`).join("")}</div>
+ <h3>Size: ${s.s}</h3><div class="opt">${p.sz.map(z=>`<button data-a="ss" data-id="${id}" data-v="${z}" class="${z==s.s?"on":""}">${z}</button>`).join("")}</div>
+ <h3>Delivery</h3><p class="mu">Delivery options and costs are shown in your cart and at checkout.</p>
+ <h3>Specifications</h3><div class="ls"><div class="row" style="padding:10px 16px"><span class="mu f">Brand</span>${p.b}</div><div class="row" style="padding:10px 16px"><span class="mu f">Category</span>${p.c}</div><div class="row" style="padding:10px 16px;border:0"><span class="mu f">Returns</span>See refund policy</div></div>
+  <h3>Related</h3><div class="hs">${rel.map(card).join("")}</div>
+ <div style="position:sticky;bottom:0;padding:12px 0;background:var(--bg);display:flex;gap:8px"><button class="btn g" style="width:96px" data-a="save2" data-id="${id}">${S.saved.includes(id)?"Saved":"Save"}</button><button class="btn" data-a="addsel" data-id="${id}">Add to cart</button></div></div>`)}
+function ov(h,keep){const o=$("#ov");o.removeAttribute("data-cr");if(!o.classList.contains("on"))window.lastF=document.activeElement;const t=o.scrollTop;o.innerHTML=h;if(keep)o.scrollTop=t;$("#view").inert=true;$("#nav").inert=true;requestAnimationFrame(()=>{o.classList.add("on");if(!keep){const b=o.querySelector(".bk button");if(b)b.focus({preventScroll:true})}})}
+function ovOff(){$("#ov").classList.remove("on");$("#view").inert=false;$("#nav").inert=false;if(window.lastF&&window.lastF.isConnected)window.lastF.focus({preventScroll:true})}
+function close(){ovOff();curSet=null;if(tab!="home"||dirty){dirty=0;render()}}
+/* EXPLORE */
+function filt(){let r=P.filter(p=>(!ex.q||(p.n+p.b+p.c+p.d).toLowerCase().includes(ex.q.toLowerCase()))&&(!ex.cat||p.c==ex.cat)&&p.p<=ex.max);
+ return r.sort((a,b)=>ex.sort=="pl"?a.p-b.p:ex.sort=="ph"?b.p-a.p:ex.sort=="rec"?score(b)-score(a):a.id-b.id)}
+function explore(){const act=ex.q||ex.cat||ex.max<400;const sg=["sneakers","headphones","linen","bag"];
+ $("#view").innerHTML=`<div class="pg"><h1>Explore</h1><input type="search" id="q" placeholder="Search products" value="${ex.q}" autocomplete="off">
+ <div class="ch">${["",...CATS].map(c=>`<button class="c ${ex.cat==c?"on":""}" data-a="cat" data-v="${c}">${c||"All"}</button>`).join("")}</div>
+ <select id="so" aria-label="Sort"><option value="feat">Featured</option><option value="rec">For you</option><option value="pl">Price: low to high</option><option value="ph">Price: high to low</option></select>
+ <div class="ch"><button class="c ${ex.max<400?"on":""}" data-a="max">Under ${m(150)}</button>${act?'<button class="c" data-a="clr">Clear</button>':""}</div>
+ ${act?`<div class="mu">${filt().length} results</div><div class="grid" style="margin-top:8px">${filt().map(card).join("")||'<p class="mu">Nothing matches. Try clearing a filter.</p>'}</div>`:`
+ ${S.searches.length?`<h3>Recent searches</h3><div class="ch">${S.searches.slice(0,5).map(s=>`<button class="c" data-a="sq" data-v="${s}">${s}</button>`).join("")}</div>`:`<h3>Try searching for</h3><div class="ch">${sg.map(s=>`<button class="c" data-a="sq" data-v="${s}">${s}</button>`).join("")}</div>`}
+ <h3>Recommended for you</h3><div class="hs">${rec().slice(0,5).map(card).join("")}</div>
+ ${S.viewed.length?`<h3>Recently viewed</h3><div class="hs">${S.viewed.slice(0,6).map(i=>card(P[i])).join("")}</div>`:""}
+ <h3>Brands</h3><div class="ch">${BR.map(b=>`<button class="c" data-a="sq" data-v="${b}">${b}</button>`).join("")}</div>`}</div>`;
+ $("#so").value=ex.sort;
+ $("#q").oninput=e=>{ex.q=e.target.value;clearTimeout(window.qt);window.qt=setTimeout(()=>{const v=ex.q.trim();if(v.length>2){S.searches=[v,...S.searches.filter(x=>x!=v)].slice(0,8);save()}const pos=e.target.selectionStart;explore();const q=$("#q");q.focus();q.setSelectionRange(pos,pos)},250)};
+ $("#so").onchange=e=>{ex.sort=e.target.value;explore()}}
+/* CART */
+function tot(){const sub=S.cart.reduce((a,l)=>a+P[l.id].p*l.q,0),d=S.code=="SWIPE10"?sub*.1:0,sh=sub-d>=150||!sub?0:9.99;return{sub,d,sh,t:sub-d+sh}}
+function cart(){const T=tot();
+ $("#view").innerHTML=`<div class="pg"><h1>Cart</h1>${S.cart.length?S.cart.map((l,i)=>{const p=P[l.id];return`<div class="row"><div class="im" style="background:${p.g[0]}"></div><div class="f"><b>${p.n}</b><div class="mu">${p.b} · ${l.c} · ${l.s}</div><div class="q"><button data-a="qm" data-i="${i}" aria-label="Decrease quantity">−</button>${l.q}<button data-a="qp" data-i="${i}" aria-label="Increase quantity">+</button><button data-a="rm" data-i="${i}" style="width:auto;background:none;color:var(--ot);font-size:.85em">Remove</button></div></div><b>${m(p.p*l.q)}</b></div>`}).join("")+
+ `<div style="display:flex;gap:8px;margin:14px 0"><input type="text" id="cd" placeholder="Discount code (try SWIPE10)" value="${S.code}"><button class="btn g" style="width:90px" data-a="code">Apply</button></div>
+ <div class="sum"><div><span>Subtotal</span>${m(T.sub)}</div>${T.d?`<div class="st"><span>Discount</span>−${m(T.d)}</div>`:""}<div><span>Shipping</span>${T.sh?m(T.sh):"Free"}</div><div class="tt"><span>Total</span>${m(T.t)}</div></div>
+ <button class="btn" style="margin-top:14px" data-a="checkout">Checkout</button><button class="btn g" style="margin-top:8px" data-a="tab" data-v="home">Continue shopping</button>`:
+ `<p class="mu" style="margin:30px 0">Your cart is empty.</p><button class="btn" data-a="tab" data-v="home">Browse products</button>`}</div>`}
+let ck={ship:"std",pay:"card",done:null};
+function checkout(){const T=tot(),ship=ck.ship=="exp"?14.99:T.sh;
+ if(ck.done){ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Order placed</div><div class="pg"><h1>Order confirmed</h1><p>Order <b>${ck.done}</b> is confirmed.</p><p class="mu" style="margin:10px 0 20px">This is a demo checkout. No payment was taken and no card details were collected. Connect Stripe Checkout to take real payments.</p><button class="btn" data-a="done">Back to shopping</button></div>`);return}
+ ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Checkout</div><div class="pg"><h3>Delivery address</h3><input type="text" id="ad" placeholder="Street, city, postcode" value="${S.addr}">
+ <h3>Shipping</h3><div class="ls">${[["std","Standard, 4 to 7 days",T.sh?m(T.sh):"Free"],["exp","Express, 1 to 2 days",m(14.99)]].map(o=>`<button data-a="ship" data-v="${o[0]}"><span>${ck.ship==o[0]?"◉":"○"} ${o[1]}</span>${o[2]}</button>`).join("")}</div>
+ <h3>Payment</h3><div class="ls">${[["card","Card (handled by payment provider)"],["pp","Wallet"],["cod","Pay on delivery"]].map(o=>`<button data-a="pay" data-v="${o[0]}"><span>${ck.pay==o[0]?"◉":"○"} ${o[1]}</span></button>`).join("")}</div>
+ <h3>Summary</h3><div class="sum">${S.cart.map(l=>`<div><span>${P[l.id].n} ×${l.q}</span>${m(P[l.id].p*l.q)}</div>`).join("")}<div class="tt"><span>Total</span>${m(T.sub-T.d+ship)}</div></div>
+ <button class="btn" style="margin-top:14px" data-a="place">Place demo order</button></div>`,1)}
+const vdb={d:null,open(){return this.d||(this.d=new Promise((res,rej)=>{const r=indexedDB.open("swipe-videos",1);r.onupgradeneeded=()=>r.result.createObjectStore("v");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+ tx(mode,fn){return this.open().then(d=>new Promise((res,rej)=>{const t=d.transaction("v",mode);fn(t.objectStore("v"));t.oncomplete=()=>res();t.onerror=()=>rej(t.error)}))},
+ put(k,b){return this.tx("readwrite",s=>{s.put(b,k)})},del(k){return this.tx("readwrite",s=>{s.delete(k)})},clear(){return this.tx("readwrite",s=>{s.clear()}).catch(()=>{})},
+ all(){return this.open().then(d=>new Promise((res,rej)=>{const o={},q=d.transaction("v").objectStore("v").openCursor();q.onsuccess=()=>{const c=q.result;if(c){o[c.key]=c.value;c.continue()}else res(o)};q.onerror=()=>rej(q.error)}))}};
+try{vdb.all().then(o=>{for(const k in o)VID[k]=URL.createObjectURL(o[k]);if(tab=="home"&&Object.keys(o).length)render()}).catch(()=>{})}catch(e){}
+function showCreator(b,keep){const ps=P.filter(p=>p.b==b),f=S.follow.includes(b),vc=S.uploads.filter(u=>ps.some(p=>p.id==u.pid)).length;
+ ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>${handle(b)}</div><div class="pg"><div class="pf"><div class="big">${b[0]}</div><div class="stat" style="flex:1;margin:0"><div><b>${vc}</b>Videos</div><div><b>${ps.length}</b>Products</div><div><b>${f?1:0}</b>Followers</div></div></div><div class="pname">${b}</div><p class="mu bio">Products from ${b} on swipe-shop.</p><button class="btn${f?" g":""}" data-a="follow" data-v="${b}" style="margin-top:14px">${f?"Following":"Follow"}</button><h3>Products</h3><div class="grid">${ps.map(card).join("")}</div></div>`,keep);$("#ov").dataset.cr=b}
+function showComments(pid,keep){const L=S.comments[pid]||[];
+ ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Comments</div><div class="pg"><p class="mu" style="margin-bottom:6px">${esc(P[pid].n)}</p>${L.length?L.map(c=>`<div class="cm"><b>${esc(c.u)}</b>${esc(c.t)}</div>`).join(""):'<p class="mu">No comments yet.</p>'}<div class="cin"><input type="text" id="ct" maxlength="300" placeholder="Add a comment" aria-label="Add a comment"><button class="btn" style="width:auto;padding:0 20px" data-a="cpost" data-id="${pid}">Post</button></div></div>`,keep)}
+function upload(){const mine=S.uploads.slice().reverse();
+ $("#view").innerHTML=`<div class="pg"><h1>Upload</h1><p class="mu">Add a vertical video to one of the products. Only upload videos you own or have permission to use. Videos are stored on this device.</p><label class="drop" for="vf"><span id="vn">Choose a video file</span></label><input type="file" id="vf" accept="video/*" class="vh"><video id="vp" class="vp" controls playsinline hidden></video><h3>Product</h3><select id="vpid" aria-label="Product">${P.map(p=>`<option value="${p.id}">${p.n} (${p.b})</option>`).join("")}</select><h3>Caption</h3><input type="text" id="vcap" maxlength="120" placeholder="Optional" aria-label="Caption"><button class="btn" style="margin-top:16px" data-a="post">Post video</button>${mine.length?`<h3>Your videos</h3><div class="ls">${mine.map(u=>`<div class="row"><div class="f"><b>${P[u.pid].n}</b><div class="mu">${esc(u.cap||"No caption")}</div></div><button class="c" data-a="delv" data-k="${u.k}">Delete</button></div>`).join("")}</div>`:""}</div>`;
+ $("#vf").onchange=e=>{const f=e.target.files[0];if(!f)return;const vp=$("#vp");if(vp.src)URL.revokeObjectURL(vp.src);vp.src=URL.createObjectURL(f);vp.hidden=false;$("#vn").textContent=f.name}}
+/* ACCOUNT */
+function account(){const u=S.user;
+ $("#view").innerHTML=`<div class="pg"><div class="hd"><h1>Profile</h1><button class="gear" data-a="opset" aria-label="Settings"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>${u?`<div class="row" style="border:0"><div class="im" style="background:var(--o);color:#fff;border-radius:50%">${u.name[0].toUpperCase()}</div><div class="f"><b>${u.name}</b><div class="mu">${u.email}</div></div><button class="c" data-a="out">Sign out</button></div>`:`<div class="ls" style="padding:14px"><p class="mu" style="margin-bottom:8px">Create a free account to keep your data together.</p><input type="text" id="nm" placeholder="Name" style="margin-bottom:8px"><input type="email" id="em" placeholder="Email"><div class="ck"><input type="checkbox" id="ag"><label for="ag">I am 18 or over and I agree to the</label><button type="button" class="lnk" data-a="legal" data-v="terms">Terms</button><span>and</span><button type="button" class="lnk" data-a="legal" data-v="privacy">Privacy policy</button></div><button class="btn" style="margin-top:10px" data-a="in">Create account / Sign in</button></div>`}
+ <div class="stat"><div><b>${S.uploads.length}</b>Videos</div><div><b>${S.saved.length}</b>Saved</div><div><b>${S.follow.length}</b>Following</div><div><b>0</b>Followers</div></div>
+ <h3>My stuff</h3><div class="ls"><button data-a="wish"><span>Wishlist</span><span class="mu">${S.saved.length} ›</span></button><button data-a="orders"><span>Order history</span><span class="mu">${S.orders.length} ›</span></button><button data-a="addr"><span>Saved address</span><span class="mu">${S.addr?"Edit":"Add"} ›</span></button><button data-a="pays"><span>Payment methods</span><span class="mu">›</span></button></div>
+ <h3>Your taste</h3><p class="mu">${Object.entries({...S.brands,...S.cats}).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]).join(", ")||"Browse and like products to build your feed."}</p>${legalList()}</div>`}
+function wish(){ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Wishlist</div><div class="pg">${S.saved.length?S.saved.map(id=>{const p=P[id];return`<div class="row"><button class="im" style="background:${p.g[0]}" data-a="open" data-id="${id}" aria-label="Open ${p.n}"></button><div class="f"><b>${p.n}</b><div>${m(p.p)}</div></div><button class="c" data-a="wadd" data-id="${id}">Add</button><button class="c" data-a="save2" data-id="${id}" data-w="1">Remove</button></div>`}).join(""):'<p class="mu">Nothing saved yet.</p>'}</div>`)}
+const N=()=>Object.assign({push:false,deals:false,orders:true,arrivals:false},S.n);
+let dirty=0,curSet=null,arm=0;
+function sets(p,keep){curSet=p;if(p!="data")arm=0;const u=S.user,n=N();
+ const bk=(t,s)=>`<div class="bk"><button data-a="${s?"sback":"close"}" aria-label="Back">←</button>${t}</div>`;
+ const li=(l,pg,r)=>`<button data-a="sg" data-v="${pg}"><span>${l}</span><span class="mu">${r||""} ›</span></button>`;
+ const tg=(l,d,k,on)=>`<div class="tr"><span>${l}<small class="mu">${d}</small></span><button class="tgl ${on?"on":""}" data-a="tgl" data-k="${k}" role="switch" aria-checked="${!!on}" aria-label="${l}"></button></div>`;
+ const chips=(k,a,cur,num)=>`<div class="ch" style="flex-wrap:wrap">${a.map(x=>`<button class="c ${cur==x[0]?"on":""}" data-a="set" data-k="${k}" data-v="${x[0]}"${num?' data-n="1"':""}>${x[1]}</button>`).join("")}</div>`;
+ const T={main:"Settings",profile:"Edit profile",notif:"Notifications",priv:"Privacy & personalisation",look:"Appearance",shop:"Shopping preferences",help:"Help centre",about:"About",data:"Your data"};let b="";
+ if(p=="main")b=`<div class="mu" style="margin:6px 0">Your account</div><div class="ls">${li("Edit profile","profile",u?u.name:"Sign in")}<button data-a="addr"><span>Saved address</span><span class="mu">${S.addr?"Edit":"Add"} ›</span></button><button data-a="pays"><span>Payment methods</span><span class="mu">›</span></button></div>
+ <div class="mu" style="margin:16px 0 6px">How you use swipe-shop</div><div class="ls">${li("Notifications","notif")}${li("Privacy & personalisation","priv")}${li("Appearance","look")}${li("Shopping preferences","shop",S.cur)}</div>
+ <div class="mu" style="margin:16px 0 6px">More</div><div class="ls">${li("Help centre","help")}${li("About swipe-shop","about")}${li("Your data","data")}</div>${u?`<button class="btn g" style="margin-top:18px" data-a="lo">Log out</button>`:""}`;
+ else if(p=="profile")b=u?`<input type="text" id="nm2" value="${u.name}" placeholder="Name" style="margin-bottom:8px"><input type="email" id="em2" value="${u.email}" placeholder="Email"><button class="btn" style="margin-top:12px" data-a="saveprof">Save changes</button>`:`<p class="mu">Create an account on the Profile page first, then you can edit your details here.</p>`;
+ else if(p=="notif")b=`<div class="grp">${tg("Push notifications","Master switch for all alerts","n.push",n.push)}${tg("Deals & price drops","When saved items go on sale","n.deals",n.deals)}${tg("Order updates","Shipping and delivery news","n.orders",n.orders)}${tg("New arrivals","Fresh drops from brands you like","n.arrivals",n.arrivals)}</div><p class="mu" style="margin-top:12px">Saved on this device. Real push alerts aren’t connected in this demo.</p>`;
+ else if(p=="priv")b=`<div class="grp">${tg("Personalised feed","Rank products using what you view, like and save","pers",S.pers!==false)}</div><div class="ls" style="margin-top:14px"><button data-a="clrs"><span>Clear search history</span><span class="mu">${S.searches.length}</span></button><button data-a="clrv"><span>Clear recently viewed</span><span class="mu">${S.viewed.length}</span></button><button data-a="rst"><span>Reset recommendations</span><span class="mu">›</span></button></div>`;
+ else if(p=="look")b=`<h3>Background</h3><div class="bgs">${[["light","White","#FFFBF7"],["black","Black","#000"],["navy","Dark blue","#0B1730"],["auto","Auto","linear-gradient(135deg,#FFFBF7 50%,#0B1730 50%)"]].map(t=>`<button class="bgo ${S.theme==t[0]?"on":""}" data-a="set" data-k="theme" data-v="${t[0]}"><i style="background:${t[2]}"></i>${t[1]}</button>`).join("")}</div><h3>Accent colour</h3><div class="sw">${["#C42B0E","#A64A08","#BE185D","#1D4ED8"].map(c=>`<button style="background:${c}" class="${S.accent==c?"on":""}" data-a="set" data-k="accent" data-v="${c}" aria-label="Accent ${c}"></button>`).join("")}</div><h3>Text size</h3>${chips("fs",[[14,"Small"],[16,"Medium"],[19,"Large"]],S.fs,1)}<div class="grp" style="margin-top:18px">${tg("Reduce motion","Turn off most animations","reduce",S.reduce)}</div>`;
+ else if(p=="shop")b=`<h3>Currency</h3>${chips("cur",Object.keys(RATE).map(c=>[c,c]),S.cur)}<h3>Favourite categories</h3><p class="mu">Pick a few and we’ll show them first.</p><div class="ch" style="flex-wrap:wrap">${CATS.map(c=>`<button class="c ${(S.favc||[]).includes(c)?"on":""}" data-a="favc" data-v="${c}">${c}</button>`).join("")}</div>`;
+ else if(p=="help")b=`<div class="grp">${[["Shipping","Standard takes 4 to 7 days and is free over "+m(150)+". Express takes 1 to 2 days."],["Returns","See the refund policy under About."],["Discount codes","Enter a code in your cart. Try SWIPE10 for 10% off."],["Contact us",BIZ.email]].map(x=>`<div class="tr"><span><b>${x[0]}</b><small class="mu">${x[1]}</small></span></div>`).join("")}</div>`;
+ else if(p=="about")b=`<p><b>swipe-shop</b> · version 1.0 (demo)</p><p class="mu" style="margin:8px 0 14px">Swipe up and down to browse, two fingers right to add to cart, two fingers left for details. Checkout is a demo and no payments are processed.</p>${legalRows()}`;
+ else b=`<p class="mu" style="margin-bottom:14px">Everything lives on this device: cart, saves, orders and preferences. To ask us to delete any data we hold about you, email ${BIZ.email}.</p><button class="btn" data-a="wipe">${arm?"Tap again to erase everything":"Erase all my data"}</button>`;
+ ov(bk(T[p],p!="main")+`<div class="pg" style="padding-top:4px">${b}</div>`,keep)}
+function fx(btn){btn.classList.remove("pp");void btn.offsetWidth;btn.classList.add("pp")}
+let prevTab="home";const ORD=["home","explore","upload","cart","profile"];
+function render(){const old=$("#view"),d=ORD.indexOf(tab)-ORD.indexOf(prevTab);let gh;
+ if(d){gh=old.cloneNode(true);gh.id="ghost";gh.querySelectorAll("[id]").forEach(x=>x.removeAttribute("id"));gh.style.pointerEvents="none";old.after(gh)}
+ theme();nav();({home,explore,upload,cart,profile:account})[tab]();
+ if(gh){old.className=d>0?"inR":"inL";gh.className=d>0?"outL":"outR";setTimeout(()=>{gh.remove();old.className=""},420)}
+ prevTab=tab}
+/* EVENTS */
+document.addEventListener("click",e=>{const b=e.target.closest("[data-t],[data-a]");if(!b)return;
+ if(b.dataset.t){tab=b.dataset.t;ovOff();render();return}
+ const a=b.dataset.a,v=b.dataset.v,id=+b.dataset.id,i=+b.dataset.i,p=P[id];
+ const A={open(){openP(id)},close,det,swadd,
+ like(){const q=feedList[idx];S.liked=S.liked.includes(q.id)?S.liked.filter(x=>x!=q.id):[...S.liked,q.id];if(S.liked.includes(q.id)){track(q,2);fx(b)}save();pos()},
+ save(){const q=feedList[idx];tg(q.id);pos();if(S.saved.includes(q.id))fx(b)},save2(){tg(id);b.dataset.w?wish():b.textContent=S.saved.includes(id)?"Saved":"Save"},
+ sc(){sel[id].c=v;openP(id)},ss(){sel[id].s=v;openP(id)},addsel(){add(id,sel[id].s,sel[id].c)},
+ legal(){showLegal(v)}, follow(){S.follow=S.follow.includes(v)?S.follow.filter(x=>x!=v):[...S.follow,v];save();const on=S.follow.includes(v);document.querySelectorAll(`[data-a=follow][data-v="${v}"]`).forEach(e=>{e.textContent=on?"Following":"Follow";e.classList.toggle("on",on)});const o=$("#ov");if(o.classList.contains("on")&&o.dataset.cr==v)showCreator(v,1)},
+ creator(){showCreator(v)},cmt(){showComments(feedList[idx].id)},det2(){openP(id)},
+ cpost(){const t=$("#ct").value.trim();if(!t)return;(S.comments[id]=S.comments[id]||[]).push({u:S.user?S.user.name:"You",t,d:Date.now()});save();showComments(id,1);$("#ct").focus();pos()},
+ share(){const d={title:"swipe-shop",text:feedList[idx].n+" on swipe-shop",url:location.href};if(navigator.share)navigator.share(d).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(location.href).then(()=>toast("Link copied"),()=>toast("Could not copy the link"));else toast("Sharing is not available here")},
+ async post(){const f=$("#vf").files[0];if(!f){toast("Choose a video first");return}if(!f.type.startsWith("video/")){toast("That file is not a video");return}if(f.size>250*1048576){toast("Choose a video under 250 MB");return}const k="v"+Date.now();try{await vdb.put(k,f)}catch(e){toast("Could not store the video on this device");return}VID[k]=URL.createObjectURL(f);S.uploads.push({k,pid:+$("#vpid").value,cap:$("#vcap").value.trim(),ts:Date.now()});save();toast("Video posted");upload()},
+ async delv(){const k=b.dataset.k;try{await vdb.del(k)}catch(e){}S.uploads=S.uploads.filter(u=>u.k!=k);if(VID[k]){URL.revokeObjectURL(VID[k]);delete VID[k]}save();upload()},
+cat(){ex.cat=v;explore()},max(){ex.max=ex.max<400?400:150;explore()},clr(){ex={q:"",cat:"",sort:"feat",max:400};explore()},sq(){ex.q=v;S.searches=[v,...S.searches.filter(x=>x!=v)].slice(0,8);save();explore()},
+ qp(){const l=S.cart[i];if(l.q<P[l.id].stock)l.q++;else toast("Maximum quantity for this item reached");save();render()},qm(){S.cart[i].q>1?S.cart[i].q--:S.cart.splice(i,1);save();render()},rm(){S.cart.splice(i,1);save();render()},
+ code(){const c=$("#cd").value.trim().toUpperCase();S.code=c=="SWIPE10"?c:"";toast(S.code?"10% off applied":"Code not valid");save();cart()},
+ checkout(){ck.done=null;checkout()},ship(){ck.ship=v;checkout()},pay(){ck.pay=v;checkout()},
+ place(){S.addr=$("#ad").value.trim();if(!S.addr){toast("Add a delivery address");return}const T=tot();ck.done="#"+Math.floor(10000+Math.random()*89999);S.orders.unshift({n:ck.done,t:T.t+(ck.ship=="exp"?14.99-T.sh:0),d:new Date().toLocaleDateString(),items:cnt()});S.cart=[];S.code="";save();nav();checkout()},
+ done(){close();tab="home";render()},
+ tab(){tab=v;render()},
+ in(){if(!$("#ag").checked){toast("Please tick the box to continue");return}const n=$("#nm").value.trim(),m2=$("#em").value.trim();if(!n||!m2.includes("@")){toast("Enter a name and valid email");return}S.user={name:n,email:m2};save();account()},out(){S.user=null;save();account()},
+ wish,wadd(){add(id,p.sz[0],p.col[0])},
+ orders(){ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Order history</div><div class="pg">${S.orders.map(o=>`<div class="row"><div class="f"><b>${o.n}</b><div class="mu">${o.d} · ${o.items} items</div></div><b>${m(o.t)}</b></div>`).join("")||'<p class="mu">No orders yet.</p>'}</div>`)},
+ addr(){ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Saved address</div><div class="pg"><input type="text" id="ad" placeholder="Street, city, postcode" value="${S.addr}"><button class="btn" style="margin-top:12px" data-a="svad">Save address</button></div>`)},
+ svad(){S.addr=$("#ad").value.trim();save();toast("Address saved");close()},
+ opset(){sets("main")},sg(){sets(v)},sback(){sets("main")},
+ tgl(){const k=b.dataset.k;if(k.startsWith("n.")){S.n=N();S.n[k.slice(2)]=!S.n[k.slice(2)]}else S[k]=!(k=="pers"?S.pers!==false:S[k]);dirty=1;save();theme();sets(curSet,1)},
+ set(){S[b.dataset.k]=b.dataset.n?+v:v;dirty=1;save();theme();sets(curSet,1)},
+ favc(){S.favc=S.favc||[];S.favc=S.favc.includes(v)?S.favc.filter(x=>x!=v):[...S.favc,v];dirty=1;save();sets(curSet,1)},
+ clrs(){S.searches=[];save();toast("Search history cleared");sets(curSet,1)},clrv(){S.viewed=[];save();toast("Recently viewed cleared");sets(curSet,1)},
+ rst(){S.cats={};S.brands={};S.liked=[];dirty=1;save();toast("Recommendations reset")},
+ saveprof(){const n=$("#nm2").value.trim(),e=$("#em2").value.trim();if(!n||!e.includes("@")){toast("Enter a name and valid email");return}S.user={name:n,email:e};dirty=1;save();toast("Profile updated");sets("main")},
+ lo(){S.user=null;save();toast("Logged out");dirty=1;curSet=null;close()},
+ wipe(){if(!arm){arm=1;sets("data",1);return}S=JSON.parse(JSON.stringify(D));sel={};VID={};vdb.clear();save();theme();dirty=0;curSet=null;tab="home";nav();ovOff();render();toast("All data erased")},
+ pays(){ov(`<div class="bk"><button data-a="close" aria-label="Back">←</button>Payment methods</div><div class="pg"><p>Cards are entered on your payment provider’s secure page at checkout. This app never stores card numbers.</p></div>`)}};
+ if(A[a])A[a]()});
+function tg(id){S.saved=S.saved.includes(id)?S.saved.filter(x=>x!=id):[...S.saved,id];if(S.saved.includes(id))track(P[id],2);save();toast(S.saved.includes(id)?"Saved to wishlist":"Removed from wishlist")}
+/* two-finger swipe right = back */
+(function(){const app=$("#app");let sx,sy,mt=0,on=0,wl=0;
+ const back=()=>{if($("#ov").classList.contains("on")){if(curSet&&curSet!="main")sets("main");else close();return true}if(tab!="home"){tab="home";render();return true}return false};
+ app.addEventListener("touchstart",e=>{if(e.target.closest("#feed")||e.target.closest("nav"))return;if(!on){on=1;mt=0}mt=Math.max(mt,e.touches.length);const t=[...e.touches];sx=t.reduce((a,c)=>a+c.clientX,0)/t.length;sy=t.reduce((a,c)=>a+c.clientY,0)/t.length},{passive:true});
+ app.addEventListener("touchmove",e=>{if(on)mt=Math.max(mt,e.touches.length)},{passive:true});
+ app.addEventListener("touchend",e=>{if(!on||e.touches.length)return;on=0;const c=e.changedTouches[0],dx=c.clientX-sx,dy=c.clientY-sy,n=mt;mt=0;if(n>1&&dx>60&&dx>Math.abs(dy)*1.2)back()},{passive:true});
+ app.addEventListener("wheel",e=>{if(e.target.closest("#feed")||Date.now()-wl<700)return;if(e.deltaX<-30&&Math.abs(e.deltaX)>Math.abs(e.deltaY)){wl=Date.now();back()}},{passive:true});
+ document.addEventListener("keydown",e=>{if(e.key=="Escape")back()})})();
+render();
+</script></body></html>
